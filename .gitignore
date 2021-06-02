@@ -1,0 +1,4 @@
+out*.csv
+.vscode
+.idea
+__pycache__
