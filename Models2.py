@@ -24,6 +24,7 @@ class EventModel:
         self.preferences: DataFrame = DataFrame(index=self.persons, columns=self.activities.index)
 
         self.max_parallel = max_parallel
+        self.max_preference = 1000
 
     def get_games_preference_score(self, games: List[str], exclude_players=[]):
         # On exclu les jeux dont un des exclus est GM
@@ -95,6 +96,34 @@ class EventModel:
         self.preferences.to_csv(base+"_preferences"+ext)
         self.activities.to_csv(base+"_activities"+ext)
         self.slots.to_csv(base+"_slots"+ext)
+
+    def clean_preferences(self):
+        self.preferences.fillna(0, inplace=True)
+
+        test_negative = (self.preferences < 0).any().any()
+        if test_negative:
+            
+            print("ERROR : a preference is not positive")
+            # print(self.preferences)
+            pers_test = self.preferences[self.preferences < 0].any(axis=1)
+            game_test = self.preferences[self.preferences < 0].any(axis=0)
+            print(self.preferences.loc[pers_test.values, game_test.values])
+
+            return False
+        
+        test_too_much = (self.preferences.sum(axis=1) > self.max_preference).any()
+        if test_too_much:
+            print("ERROR : a user has spent too munch")
+            pers_test = self.preferences.sum(axis=1) > self.max_preference
+            print(pd.DataFrame({'total': self.preferences.sum(axis=1)}))
+
+            return False
+
+        if not (self.preferences[self.preferences.columns] % 1  == 0).all().all():
+            print("ERROR : some values are not integers")
+            return False
+
+        return True
 
 class SlotInstance:
     def __init__(self, event_model: EventModel) -> None:
