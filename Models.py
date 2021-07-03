@@ -183,7 +183,7 @@ class EventInstance:
         self.model: EventModel = model
 
         # self.slots: List[SlotInstance] = []
-        self.games_states: DataFrame = DataFrame(index=self.model.activities.index, columns=['planned', 'available', 'score'])
+        self.games_states: DataFrame = DataFrame(index=self.model.activities.index, columns=['planned', 'available', 'full', 'score'])
         self.game_slots_states: DataFrame = DataFrame(index=self.model.slots.columns, columns=['full_people', 'full_activity', 'index_to_fill', 'available_players_nb_min', 'available_players_nb_max'])
 
         # out
@@ -197,6 +197,7 @@ class EventInstance:
     def init_games_states(self):
         self.games_states.loc[:,'planned'] = False
         self.games_states.loc[:,'available'] = True
+        self.games_states.loc[:,'full'] = False
         self.games_states.loc[:,'score'] = 0
 
     def init_game_slots_states(self):
@@ -222,7 +223,7 @@ class EventInstance:
         other_games = self.plan_activities[slot][self.plan_activities[slot] != game][self.plan_activities[slot].notnull()].tolist()
         nb_people_already_in_game = self.plan_persons[slot][self.plan_persons[slot] == game].count()
         if len(other_games)>0:
-            min_people_other_games = self.model.activities['min_people'][other_games].sum()
+            min_people_other_games = self.model.activities['min_people'][other_games].sum() + len(other_games)
             return min(
                 self.model.slots[slot].value_counts()[1] - min_people_other_games - nb_people_already_in_game, 
                 self.model.activities.loc[game, 'max_people'] - nb_people_already_in_game + 1

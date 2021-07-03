@@ -105,6 +105,11 @@ class OptimizerDeterminist(Optimizer):
 
         # On prends la personne avec la plus grande mise parmis les 2 tables du slot
         games = event.get_games_from_slot(slot)
+
+        # On retire les jeux dejà plein
+        excluded_game = set(event.games_states[event.games_states['full']].index.tolist())
+        games = list(set(games) - excluded_game)
+
         best_players = event.model.get_best_players_in(games, exclude_players=unavailable_players)
 
         # Il faut que le nombre max de joueur rajoutable sur la table ne depasse pas
@@ -122,6 +127,8 @@ class OptimizerDeterminist(Optimizer):
             nb_players_left = event.get_nb_players_left_in_slot_for_game(slot, p[1])
             if(nb_players_left>0):
                 event.plan_persons.loc[p[0], slot] = p[1]
+            else:
+                event.games_states.loc[p[1], 'full'] = True
 
     def fill_slots_from_preferences(self, event: EventInstance):
         """Utilise les préférences des personnes de l'evenement pour mettre en place 
