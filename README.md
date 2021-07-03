@@ -23,7 +23,7 @@ Pour tester ce serveur on peut utiliser le script `tests/test_client_http.py`.
 
 ### Installation
 
-1. Lancer `OptimizerServer.py` sur un serveur. Le mieux c'est d'en faire un service. Sinon on peut le lancer avec la commande screen.
+1. Lancer `OptimizerServer.py` sur un serveur (linux de préférence). Le mieux c'est d'en faire un service linux (cf https://doc.ubuntu-fr.org/creer_un_service_avec_systemd). Sinon on peut le lancer avec la commande screen pour éviter qu'il se termine lors de la deconnexion de la session de connexion au serveur.
 ```
 screen -d -m -S OptimizerServer python3 OptimizerServer.py
 ```
