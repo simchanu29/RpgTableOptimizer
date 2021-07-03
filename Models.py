@@ -12,9 +12,15 @@ def arr_to_df(arr: List) -> DataFrame:
     columns = arr[0][1:]
     data = [i[1:] for i in arr[1:]]
     index = [i[0] for i in arr[1:]]
-    return pd.DataFrame(data, columns=columns, index=index)
 
-def df_to_arr(data_df: DataFrame) -> List:
+    df = pd.DataFrame(data, columns=columns, index=index)
+    df.replace('', np.nan, inplace=True)
+
+    return df
+
+def df_to_arr(df: DataFrame) -> List:
+    data_df = df.replace(np.nan, '')
+
     data_df_index = data_df.index.tolist()
     data_list = data_df.to_numpy().tolist()
 
@@ -104,8 +110,6 @@ class EventModel:
         return players
 
     def from_array(self, arr_slots, arr_activities, arr_preferences):
-        print(arr_preferences)
-
         # arr_slots
         self.slots: DataFrame = arr_to_df(arr_slots)
         self.activities: DataFrame = arr_to_df(arr_activities)
@@ -137,6 +141,7 @@ class EventModel:
         self.slots.to_csv(base+"_slots"+ext)
 
     def clean_preferences(self):
+        
         self.preferences.fillna(0, inplace=True)
 
         test_negative = (self.preferences < 0).any().any()

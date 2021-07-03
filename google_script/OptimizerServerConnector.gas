@@ -1,0 +1,36 @@
+function run() {
+    var url = "http://vps.simon-chanu.eu:8000"
+  
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+    console.log("Opening Preferences");
+    var sheet = ss.getSheetByName('Preferences');
+    var data_preferences = sheet.getDataRange().getValues();
+  
+    console.log("Opening Activities");
+    var sheet = ss.getSheetByName('Activities');
+    var data_activities = sheet.getDataRange().getValues();
+  
+    console.log("Opening Slots");
+    var sheet = ss.getSheetByName('Slots');
+    var data_slots = sheet.getDataRange().getValues();
+  
+  
+    var payload = JSON.stringify({
+            "preferences": data_preferences,
+            "slots": data_slots,
+            "activities": data_activities
+        })
+  
+    var options = {
+        "method": "post",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "payload": payload
+    };
+    var response = UrlFetchApp.fetch(url, options);
+  
+    console.log(response)
+  }
+  

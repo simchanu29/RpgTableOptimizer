@@ -1,0 +1,14 @@
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  // Or DocumentApp or FormApp.
+  ui.createMenu('Optimizer')
+      .addItem('Run optimization', 'menuItemRun')
+      .addToUi();
+}
+
+function menuItemRun() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+     .alert('Optimization launched');
+  run_optimizer()
+}
+

@@ -1,6 +1,7 @@
 import requests
 import json
 import pandas as pd
+import numpy as np
 
 from typing import List, Dict, Tuple
 
@@ -8,9 +9,12 @@ def arr_to_df(arr: List) -> pd.DataFrame:
     columns = arr[0][1:]
     data = [i[1:] for i in arr[1:]]
     index = [i[0] for i in arr[1:]]
-    return pd.DataFrame(data, columns=columns, index=index)
 
-def df_to_arr(data_df: pd.DataFrame) -> List:
+    return pd.DataFrame(data, columns=columns, index=index).replace('', np.nan, inplace=True)
+
+def df_to_arr(df: pd.DataFrame) -> List:
+    data_df = df.replace(np.nan, '')
+
     data_df_index = data_df.index.tolist()
     data_list = data_df.to_numpy().tolist()
 
@@ -18,7 +22,6 @@ def df_to_arr(data_df: pd.DataFrame) -> List:
     data_list = [[''] + data_df.columns.tolist()] + data_list_with_index
 
     return data_list
-
 def csv_to_df(file: str):
     data_df = pd.read_csv(file, index_col=0)
     return df_to_arr(data_df)

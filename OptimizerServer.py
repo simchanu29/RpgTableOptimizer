@@ -24,10 +24,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     def _read_json_msg(self) -> Dict:
         return json.loads(self.rfile.read(int(self.headers.get('content-length'))))
 
-    # def do_GET(self):
-    #     self.send_response(200)
-    #     self.end_headers()
-    #     self.wfile.write(b'Hello, world!')
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'RpgTableSolver. POST request only.')
 
     def do_HEAD(self):
         self._set_headers()
@@ -41,6 +41,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             
         # read the message and convert it into a python dictionary
         message = self._read_json_msg()
+        print(message)
         
         model = EventModel(max_parallel=4)
 
@@ -59,5 +60,5 @@ class RequestHandler(BaseHTTPRequestHandler):
             data = event.to_arr()
             self._send_json_msg(data)
 
-httpd = HTTPServer(('localhost', 8000), RequestHandler)
+httpd = HTTPServer(('0.0.0.0', 8000), RequestHandler)
 httpd.serve_forever()
