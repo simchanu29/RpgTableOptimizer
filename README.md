@@ -2,6 +2,10 @@
 
 Repository still under developpement
 
+### Dépendances
+
+- pandas
+
 ### TODO list
 
 - Optimisation par algorithme génétique

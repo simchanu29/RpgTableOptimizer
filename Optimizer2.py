@@ -99,18 +99,29 @@ class OptimizerDeterminist(Optimizer):
         # Pour chaque table dans le slot
         unavailable_players = event.get_unavailable_players(slot)
         print("unavailable_players=", unavailable_players)
+        
+        # unavailable_games = event.get_full_games_from_slot(slot)
+        # print("unavailable_games=", unavailable_games)
 
         # On prends la personne avec la plus grande mise parmis les 2 tables du slot
-        games = event.plan_activities[slot][event.plan_activities[slot].notnull()].tolist()
+        games = event.get_games_from_slot(slot)
         best_players = event.model.get_best_players_in(games, exclude_players=unavailable_players)
 
         # Il faut que le nombre max de joueur rajoutable sur la table ne depasse pas
         # (le nombre de joueurs total) - (somme des min des autres tables)
         for p in best_players:
-            nb_players_left = event.get_nb_players_left(slot, p[1])
+
+            # Gestion des mises égales
+            if len(p[1])>1:
+                # On prend le jeu qui a actuellement le plus de place restante
+                games_players_left = [(event.get_nb_players_left_in_slot_for_game(slot, game), game) for game in p[1]]
+                p[1] = max(games_players_left, key=lambda x: x[0])[1]
+            else:
+                p[1] = p[1][0]
+
+            nb_players_left = event.get_nb_players_left_in_slot_for_game(slot, p[1])
             if(nb_players_left>0):
                 event.plan_persons.loc[p[0], slot] = p[1]
-
 
     def fill_slots_from_preferences(self, event: EventInstance):
         """Utilise les préférences des personnes de l'evenement pour mettre en place 
@@ -118,18 +129,29 @@ class OptimizerDeterminist(Optimizer):
         """
 
         # Remplissage des activités dans les slots
+        depth = 0
         while not event.are_game_slots_full_activities():
-            for slot in event.plan_activities:
-                # On somme les mise sur une activité et on les classe de manière décroissante
-                print("=== FILL ACTIVITY LOOP")
-                self.insert_best_game_in_slot(event, slot)
-        
+            # On somme les mise sur une activité et on les classe de manière décroissante
+            if depth % 2 == 0:
+                slot_list = event.plan_activities.columns.tolist()
+            else:
+                slot_list = reversed(event.plan_activities.columns.tolist())
+
+            for slot_id in slot_list:
+                print("=== FILL ACTIVITY LOOP :", slot_id)
+                self.insert_best_game_in_slot(event, slot_id)
+            
+            depth+=1
+
+
         # Remplissage des gens dans les activités
         
         # Pour chaque slot
         for slot in event.plan_activities:
             while not event.are_game_slot_full_persons(slot):
-                print("=== FILL PEOPLE LOOP")
+                # if slot == '180':
+                #     print("DEBUG")
+                print("=== FILL PEOPLE LOOP :", slot)
                 self.insert_best_people_in_slot(event, slot)
 
         # print(event.game_slots)
@@ -150,11 +172,7 @@ class OptimizerDeterminist(Optimizer):
 
 if __name__ == "__main__":
     # Init event
-    model = EventModel(3, 
-        ["Alice", "Bob", "Tara", "Leo", "Hans", "Uri", "Lara", "Kenny"], 
-        ["toto1", "toto2", "toto3", "toto4", "toto5", "toto6", "toto7", "toto8", "toto9"],
-        max_parallel=4
-    )
+    model = EventModel(max_parallel=4)
 
     model.from_csv(
         "in_slots.csv",

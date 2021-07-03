@@ -7,7 +7,7 @@ from pandas.core.frame import DataFrame
 import random as rand
 
 class EventModel:
-    def __init__(self, slots_nb: int, persons: List[str], activities: List[str], max_parallel=10) -> None:
+    def __init__(self, max_parallel=10) -> None:
         """Construit l'EventModel, il faut ensuite remplir ses informations internes
 
         Args:
@@ -17,11 +17,15 @@ class EventModel:
             max_parallel (int): nombre d'activitées maximum en simultané sur un slot
         """
         
-        self.persons: List[str] = persons
+        # self.persons: List[str] = persons
+        self.persons: List[str] = []
         # self.slots: DataFrame = DataFrame(index=range(max_parallel), columns=range(slots_nb))
-        self.slots: DataFrame = DataFrame(index=range(slots_nb), columns=['date', 'heure'])
-        self.activities: DataFrame = DataFrame(index=activities, columns=['org', 'max_people', 'min_people', 'min_preference'])
-        self.preferences: DataFrame = DataFrame(index=self.persons, columns=self.activities.index)
+        self.slots: DataFrame = DataFrame()
+        # self.slots: DataFrame = DataFrame(index=range(slots_nb), columns=['date', 'heure'])
+        self.activities: DataFrame = DataFrame()
+        # self.activities: DataFrame = DataFrame(index=activities, columns=['org', 'max_people', 'min_people', 'min_preference'])
+        self.preferences: DataFrame = DataFrame()
+        # self.preferences: DataFrame = DataFrame(index=self.persons, columns=self.activities.index)
 
         self.max_parallel = max_parallel
         self.max_preference = 1000
@@ -34,28 +38,29 @@ class EventModel:
         # On exclu les mises des joueurs exclu
         # print("exclude_players=", exclude_players)
         # print(self.preferences[~self.preferences.index.isin(exclude_players)][games])
-        return self.preferences[~self.preferences.index.isin(exclude_players)][games].sum(axis=0)
+
+        sum_chosen = self.preferences[~self.preferences.index.isin(exclude_players)][games].sum(axis=0)
+        sum_excluded = self.preferences[self.preferences.index.isin(exclude_players)][games].sum(axis=0)
+
+        return sum_chosen - sum_excluded
+        # return sum_chosen
 
     def get_best_players(self, game, exclude_players=[]):
         # Serie des joueurs ayant le plus misé sur le jeu
         df = self.preferences[~self.preferences.index.isin(exclude_players)]
-        best_players = df[df[game] == df[game].max()][game]
-        # Serie si pour chacun des joueur c'est sa meilleure mise
-        best_games=(self.preferences[self.preferences.index.isin(best_players.index)].idxmax(axis=1) == game)
-      
-        # On merge les 2 pour calculer eux pour qui c'est la meilleure mise.
-        df_best_players = DataFrame({'preference': best_players, 'best_game': best_games})
-        best_player_serie = df_best_players[df_best_players['best_game']]
 
+        # les best_players sont tout les joueurs dont la mise maximale est sur le jeu
+        # Serie si pour chacun des joueur c'est sa meilleure mise
+        best_player_serie = df[(df[game] == df.max(axis=1))&(df.max(axis=1) != 0)][game]
+   
         best_players = []
         if not best_player_serie.empty:
-            best_players = best_player_serie.index.tolist()
+            best_players = best_player_serie.sort_values(ascending=False).index.tolist()
             if len(best_players)>1:
                 rand.shuffle(best_players)
 
         return best_players
         
-
     def get_best_players_in(self, games, exclude_players=[]) -> List[str]:
         """On prends parmis les 2 jeux la mise la plus forte et on l'applique
 
@@ -75,12 +80,14 @@ class EventModel:
             rand.shuffle(players)
 
         for i, p in enumerate(players):
-            players[i] = (p, players_df.loc[p,:].idxmax())
+            wanted_games = players_df.loc[p,:][players_df.loc[p,:] == max_value].index.tolist()
+            players[i] = [p, wanted_games]
 
         return players
 
     def from_csv(self, filename_slots, filename_activities, filename_preferences):
         self.preferences: DataFrame = pd.read_csv(filename_preferences, index_col=0)
+        self.persons = self.preferences.index.tolist()
         self.activities: DataFrame = pd.read_csv(filename_activities, index_col=0)
         self.slots: DataFrame = pd.read_csv(filename_slots, index_col=0)
 
@@ -140,11 +147,11 @@ class EventInstance:
 
         # self.slots: List[SlotInstance] = []
         self.games_states: DataFrame = DataFrame(index=self.model.activities.index, columns=['planned', 'available', 'score'])
-        self.game_slots_states: DataFrame = DataFrame(index=self.model.slots.index, columns=['full_people', 'full_activity', 'index_to_fill', 'available_players_nb_min', 'available_players_nb_max'])
+        self.game_slots_states: DataFrame = DataFrame(index=self.model.slots.columns, columns=['full_people', 'full_activity', 'index_to_fill', 'available_players_nb_min', 'available_players_nb_max'])
 
         # out
-        self.plan_activities: DataFrame = DataFrame(index=range(self.model.max_parallel), columns=self.model.slots.index)
-        self.plan_persons: DataFrame = DataFrame(index=self.model.persons, columns=self.model.slots.index)
+        self.plan_activities: DataFrame = DataFrame(index=range(self.model.max_parallel), columns=self.model.slots.columns)
+        self.plan_persons: DataFrame = DataFrame(index=self.model.persons, columns=self.model.slots.columns)
 
         # init 
         self.init_games_states()
@@ -163,7 +170,7 @@ class EventInstance:
         self.game_slots_states.loc[:,'available_players_nb_max'] = len(self.model.persons)
         # print(self.game_slots_states)
 
-    def get_nb_players_left(self, slot, game):
+    def get_nb_players_left_in_slot_for_game(self, slot, game):
         """ On recupere le nombre de personne restantes maximum qu'on peut mettre sur une table sans invalider
         les autres par manque de joueurs.
 
@@ -179,9 +186,15 @@ class EventInstance:
         nb_people_already_in_game = self.plan_persons[slot][self.plan_persons[slot] == game].count()
         if len(other_games)>0:
             min_people_other_games = self.model.activities['min_people'][other_games].sum()
-            return len(self.model.persons) - min_people_other_games - nb_people_already_in_game
+            return min(
+                self.model.slots[slot].value_counts()[1] - min_people_other_games - nb_people_already_in_game, 
+                self.model.activities.loc[game, 'max_people'] - nb_people_already_in_game + 1
+            )
         else:
-            return len(self.model.persons)
+            return min(
+                self.model.slots[slot].value_counts()[1], 
+                self.model.activities.loc[game, 'max_people'] - nb_people_already_in_game + 1
+            ) 
 
     def get_available_games(self):
         return self.games_states[self.games_states['available'] == True].index.tolist()
@@ -231,8 +244,23 @@ class EventInstance:
     def update_games_score(self, games, exclude_players=[]) -> None:
         self.games_states.loc[:,'score'] = self.model.get_games_preference_score(games, exclude_players=exclude_players)
 
+    def get_full_games_from_slot(self, slot: int) -> List[str]:
+        # On cherche les jeux dont le nombre de personne dans le slot a atteint son maximum
+        games_in_slot = self.get_games_from_slot(slot)
+
+        # Pour chacun de ces jeux on regarde si leur nombre de joueur atteint son maximum
+        games_full = []
+        for game in games_in_slot:
+            if(self.plan_persons[slot][self.plan_persons[slot] == game].count() > self.model.activities.loc[game, 'max_people']):
+                games_full.append(game)
+
+        return games_full
+
     def get_unavailable_players(self, slot: int) -> List[str]:
-        return self.plan_persons[self.plan_persons[slot].notnull()][slot].index.tolist()
+        unavailable_players = self.model.slots[slot][self.model.slots[slot] == 0].index.tolist()
+        busy_players = self.plan_persons[self.plan_persons[slot].notnull()][slot].index.tolist()
+
+        return np.unique(unavailable_players + busy_players)
 
     def to_csv(self, filename):
         filename_arr: List[str] = filename.split('.')
@@ -260,8 +288,11 @@ class EventInstance:
         print("nb_persons_busy=", nb_persons_busy)
         print("max_people_in_games=", self.model.activities[self.model.activities.index.isin(games)]['max_people'].sum() + len(games))
         
+        # print("slot=", slot, "self.model.slots=", self.model.slots)
+        # print("value_counts=\n", self.model.slots[slot])
+
         res = (
-            (nb_persons_busy == len(self.model.persons)) # Vérifie si il reste des gens de disponibles
+            (nb_persons_busy == self.model.slots[slot].value_counts()[1]) # Vérifie si il reste des gens de disponibles
             or (
                 nb_persons_busy 
                 >= self.model.activities[self.model.activities.index.isin(games)]['max_people'].sum() + len(games)
@@ -291,11 +322,7 @@ class EventInstance:
 
 ### test
 if __name__=="__main__":
-    model = EventModel(6, 
-        ["Alice", "Bob", "Tara", "Leo", "Hans", "Uri", "Lara", "Kenny"], 
-        ["toto1", "toto2", "toto3", "toto4", "toto5", "toto6", "toto7", "toto8", "toto9"],
-        max_parallel=4
-    )
+    model = EventModel(max_parallel=4)
 
     model.from_csv(
         "in_slots.csv",
