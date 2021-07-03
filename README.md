@@ -48,7 +48,6 @@ WIP
 ### TODO list
 
 - Optimisation par algorithme génétique
-- Intégration avec google sheet effectuant des requete au programme tournant sur un serveur distant.
 - Fonction de coût : 
   - Optimisation de la diversité des joueurs
   - Optimisation de la diversité des MJs
