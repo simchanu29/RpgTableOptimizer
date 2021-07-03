@@ -47,9 +47,9 @@ WIP
 
 ### TODO list
 
-- Optimisation par algorithme génétique
-- Fonction de coût : 
-  - Optimisation de la diversité des joueurs
-  - Optimisation de la diversité des MJs
-- Fonctionnalité de réservation de table
-- Fonctionnalité de réservation de joueur
+- [ ] Optimisation par algorithme génétique
+- [ ] Fonction de coût : 
+  - [ ] Optimisation de la diversité des joueurs
+  - [ ] Optimisation de la diversité des MJs
+- [ ] Fonctionnalité de réservation de table
+- [ ] Fonctionnalité de réservation de joueur
