@@ -1,36 +1,48 @@
-function run() {
-    var url = "http://vps.simon-chanu.eu:8000"
-  
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-    console.log("Opening Preferences");
-    var sheet = ss.getSheetByName('Preferences');
-    var data_preferences = sheet.getDataRange().getValues();
-  
-    console.log("Opening Activities");
-    var sheet = ss.getSheetByName('Activities');
-    var data_activities = sheet.getDataRange().getValues();
-  
-    console.log("Opening Slots");
-    var sheet = ss.getSheetByName('Slots');
-    var data_slots = sheet.getDataRange().getValues();
-  
-  
-    var payload = JSON.stringify({
-            "preferences": data_preferences,
-            "slots": data_slots,
-            "activities": data_activities
-        })
-  
-    var options = {
-        "method": "post",
-        "headers": {
-            "content-type": "application/json"
-        },
-        "payload": payload
-    };
-    var response = UrlFetchApp.fetch(url, options);
-  
-    console.log(response)
-  }
-  
+var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+function send_request(payload){
+  var url = "http://vps.simon-chanu.eu:8000"
+
+  var options = {
+      "method": "post",
+      "headers": {
+          "content-type": "application/json"
+      },
+      "payload": payload
+  };
+  return JSON.parse(UrlFetchApp.fetch(url, options).getContentText());
+}
+
+function get_data(sheet_name){
+  console.log("Opening ", sheet_name);
+  var sheet = ss.getSheetByName(sheet_name);
+  return sheet.getDataRange().getValues();  
+}
+
+function set_data(sheet_name, data){
+  console.log("Opening ", sheet_name);
+  var sheet = ss.getSheetByName(sheet_name);
+
+  data_col_size = data[0].length
+  data_row_size = data.length
+
+  sheet.getRange(1, 1, data_row_size, data_col_size).setValues(data);
+}
+
+function run_optimizer() {
+  var response = send_request(
+    JSON.stringify(
+      {
+        "preferences": get_data('Preferences'),
+        "slots": get_data('Slots'),
+        "activities": get_data('Activities')
+      }
+    )
+  )
+
+  console.log(response)
+
+  set_data('Plan Activities', response['plan_activities'])
+  set_data('Plan Persons', response['plan_persons'])
+  set_data('Analyse Result', response['analyse_happyness'])
+}

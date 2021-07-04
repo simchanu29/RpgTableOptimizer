@@ -24,8 +24,13 @@ def df_to_arr(df: DataFrame) -> List:
     data_df_index = data_df.index.tolist()
     data_list = data_df.to_numpy().tolist()
 
-    data_list_with_index = [[data_df_index[i]] + row for i, row in enumerate(data_list)]
-    data_list = [[''] + data_df.columns.tolist()] + data_list_with_index
+    data_list_with_index = []
+    if not isinstance(data_list[0], list):
+        data_list_with_index = [[data_df_index[i]] + [row] for i, row in enumerate(data_list)]
+        data_list = data_list_with_index
+    else:
+        data_list_with_index = [[data_df_index[i]] + row for i, row in enumerate(data_list)]
+        data_list = [[''] + data_df.columns.tolist()] + data_list_with_index
 
     return data_list
 
@@ -52,7 +57,7 @@ class EventModel:
         # self.preferences: DataFrame = DataFrame(index=self.persons, columns=self.activities.index)
 
         self.max_parallel = max_parallel
-        self.max_preference = 1000
+        self.max_preference = np.inf
 
     def get_games_preference_score(self, games: List[str], exclude_players=[]):
         # On exclu les jeux dont un des exclus est GM

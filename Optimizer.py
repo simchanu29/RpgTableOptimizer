@@ -19,6 +19,9 @@ class Optimizer:
         print("ERROR : optimize function not overloaded")
 
     def compute_happyness(self, event: EventInstance):
+        return self.compute_happyness_df(event).min()
+
+    def compute_happyness_df(self, event: EventInstance):
         """Calcule le contentement des gens par rapport à leur préférences
 
         Pour chaque personne, on calcule si sa mise a été prise en compte ou non :
@@ -45,11 +48,11 @@ class Optimizer:
             df_pref.loc[pers, games_serie_person_not_planned] = df_pref.loc[pers, games_serie_person_not_planned].multiply(-1, fill_value=0)
 
         df_happyness = df_pref.sum(axis=1)
-        print(df_pref)
-        print()
+        # print(df_pref)
+        # print()
         print(df_happyness)
 
-        return df_happyness.min()
+        return df_happyness
 
 
 class OptimizerDeterminist(Optimizer):
@@ -172,7 +175,7 @@ class OptimizerDeterminist(Optimizer):
         
         self.fill_slots_from_preferences(instance)
 
-        self.compute_happyness(instance)
+        # self.compute_happyness(instance)
 
         return instance
 

@@ -8,7 +8,7 @@ import json
 from requests import models
 
 from Optimizer import Optimizer, OptimizerDeterminist
-from Models import EventModel
+from Models import EventModel, df_to_arr
 
 class RequestHandler(BaseHTTPRequestHandler):
     
@@ -58,6 +58,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             
             # send the message back
             data = event.to_arr()
+            data["analyse_happyness"] = df_to_arr(optimizer.compute_happyness_df(event))
+
             self._send_json_msg(data)
 
 httpd = HTTPServer(('0.0.0.0', 8000), RequestHandler)
