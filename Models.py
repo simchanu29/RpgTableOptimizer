@@ -64,6 +64,7 @@ class EventModel:
         excluded_activities = self.activities[self.activities['org'].isin(exclude_players)].index
         activities_serie = pd.Series(activities)
         activities = activities_serie[~activities_serie.isin(excluded_activities)].tolist()
+        activities_factor = self.activities[self.activities.index.isin(activities)]['div_preference']
         # On exclu les mises des joueurs exclu
         # print("exclude_players=", exclude_players)
         # print(self.preferences[~self.preferences.index.isin(exclude_players)][activities])
@@ -71,7 +72,7 @@ class EventModel:
         sum_chosen = self.preferences[~self.preferences.index.isin(exclude_players)][activities].sum(axis=0)
         sum_excluded = self.preferences[self.preferences.index.isin(exclude_players)][activities].sum(axis=0)
 
-        return sum_chosen - sum_excluded
+        return (sum_chosen - sum_excluded) / activities_factor
         # return sum_chosen
 
     def get_best_players(self, activity, exclude_players=[]):
@@ -264,7 +265,7 @@ class EventInstance:
         gm = self.model.activities.loc[activity,'org']
 
         # Ignore activities without org
-        if gm != np.nan and gm != '' and gm != None:
+        if not(pd.isnull(gm) or gm == np.nan or gm == '' or gm == None):
             self.plan_persons.loc[gm, slot] = activity
 
         # activity not available
