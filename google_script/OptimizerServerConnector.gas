@@ -1,7 +1,7 @@
 var ss = SpreadsheetApp.getActiveSpreadsheet();
 
 function send_request(payload){
-  var url = "http://vps.simon-chanu.eu:8000"
+  var url = "http://my_server.com:8000" // CHANGE THIS TO YOUR OWN SERVER
 
   var options = {
       "method": "post",

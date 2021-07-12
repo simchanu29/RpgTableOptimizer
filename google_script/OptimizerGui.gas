@@ -7,8 +7,8 @@ function onOpen() {
 }
 
 function menuItemRun() {
-  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
-     .alert('Optimization launched');
   run_optimizer()
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+     .alert('Optimization done');
 }
 
