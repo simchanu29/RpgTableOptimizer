@@ -1,4 +1,9 @@
-,date,heure
-0,0,aprem
-1,0,soir
-2,1,aprem
+,0,1,2
+Alice,1,1,0
+Bob,1,1,1
+Tara,1,1,1
+Leo,1,1,1
+Hans,1,1,1
+Uri,1,1,1
+Lara,1,1,1
+Kenny,1,1,1

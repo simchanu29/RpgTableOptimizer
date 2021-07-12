@@ -45,6 +45,9 @@ L'optimisation déterministe simple fonctionne de la manière suivante :
 
 WIP
 
+### Known issues
+- Quand il n'y a plus assez de personne pour remplir des tables en tenant en compte le nombre de minimum pour constituer une table on a une boucle infinie. 
+
 ### TODO list
 
 - Optimisation par algorithme génétique

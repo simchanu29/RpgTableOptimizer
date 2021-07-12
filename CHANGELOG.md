@@ -8,5 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Optimisateur par fonctionnement déterministique simple
+    - Préférences par enchères
+    - Possibilité de spécifier des gens là ou pas là à chaque slot
+    - Possibilité pour les MJs de rendre leurs tables plus ou moins chères
 - Serveur Réseau
-- Interface réseau par tableaux 2D
+- Interface réseau par tableaux 2D (google app script fournis)
