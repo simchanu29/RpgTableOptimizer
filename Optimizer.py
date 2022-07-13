@@ -185,9 +185,9 @@ if __name__ == "__main__":
     model = EventModel(max_parallel=4)
 
     model.from_csv(
-        "in_slots.csv",
-        "in_activities.csv",
-        "in_preferences.csv" 
+        "tests/in_slots.csv",
+        "tests/in_activities.csv",
+        "tests/in_preferences.csv" 
     )
 
     if model.clean_preferences():

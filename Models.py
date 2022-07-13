@@ -124,8 +124,19 @@ class EventModel:
         self.persons = self.preferences.index.tolist()
 
         persons_list = self.preferences.index.values.tolist()
+
+        # check persons
         if persons_list != self.persons:
             print("ERROR : not same persons", persons_list, "and", self.persons)
+
+        # check preferences (to scale)
+        # TODO mettre en paramétrage la mise voulue
+        # Replace nan by 0
+        self.preferences.fillna(0, inplace=True)
+        # Normalize
+        self.preferences = self.preferences.div(self.preferences.sum(axis=1), axis=0)*1000
+        # Change to int
+        self.preferences = self.preferences.astype(int)
 
     def from_csv(self, filename_slots, filename_activities, filename_preferences):
         self.preferences: DataFrame = pd.read_csv(filename_preferences, index_col=0)
@@ -373,14 +384,22 @@ class EventInstance:
         self.activity_slots_states.loc[slot, 'full_activity'] = True
 
 
+'''
+Faudrait un modèle générique
+
+Au vu du nom des fonctions faudrait
+- Objet Slot
+    - Liste d'activité
+'''
+
 ### test
 if __name__=="__main__":
     model = EventModel(max_parallel=4)
 
     model.from_csv(
-        "in_slots.csv",
-        "in_activities.csv",
-        "in_preferences.csv" 
+        "tests/in_slots.csv",
+        "tests/in_activities.csv",
+        "tests/in_preferences.csv" 
     )
     model.to_csv("out2.csv")
 
